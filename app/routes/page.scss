@@ -1,0 +1,217 @@
+@use "sass:math";
+
+@property --scrollbar {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+html,
+body {
+  background-color: #000;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+
+  --scrollbar: calc(100vw - 100cqw);
+}
+
+@function strip-units($number) {
+  @return math.div($number, ($number * 0 + 1));
+}
+
+@function to-px($value) {
+  @return strip-units($value) * 16px;
+}
+
+@function to-rem($value) {
+  @return strip-units($value) * 16px;
+}
+
+@function getUnit($value) {
+  @return str-slice($value * 0 + "", 2, -1);
+}
+
+// @mixin fluid($property, $from, $to, $bp-from, $bp-to) {
+//   $slope: math.div($to - $from, $bp-to - $bp-from);
+//   // $intercept: $to - $slope * $bp-to;
+//   $intercept: $from - $slope * $bp-from;
+
+//   // #{$property}: calc(
+//   //   $from - #{$slope * strip-units($bp-from)}#{getUnit($from)} + #{$slope *
+//   //     100vw}
+//   // );
+//   #{$property}: calc(#{$intercept} + #{$slope * 100vw});
+// }
+
+@function fluid($from, $to, $bp-from, $bp-to) {
+  $slope: math.div($to - $from, $bp-to - $bp-from);
+  $intercept: $from - $slope * $bp-from;
+
+  @return calc(#{$intercept} + #{$slope * 100vw});
+}
+
+.table-bg {
+  /* background-image: url("/assets/andrik-langfield-1-YQiOijio8-unsplash.jpg"); */
+  background-image: url("/assets/andrik-langfield-1-YQiOijio8-unsplash-full.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-size: 226%;
+  background-position: calc(50% - var(--scrollbar)) 100%;
+  width: 100%;
+  min-height: 100%;
+  display: block;
+  padding-block: 1rem 2rem;
+
+  @media screen and (min-width: 640px) {
+    background-size: calc(100% + 50.5rem); // 2308px
+    background-position: 49.5% calc(100% + (100vw - 640px) / 8);
+    padding-block: 1rem 7.3rem;
+  }
+
+  @media screen and (min-width: 850px) {
+    padding-block: 4rem 7.3rem;
+  }
+
+  @media screen and (min-width: 1500px) {
+    background-size: calc(1500px + 50.5rem); // 2308px
+    background-position: calc(49.5% - 8px + 0.5vw)
+      calc(100% + (1500px - 640px) / 8);
+  }
+
+  @media screen and (min-width: 2308px) {
+    background-size: 100%;
+  }
+
+  @media print {
+    display: contents;
+  }
+}
+
+@media screen and (min-width: 850px) {
+  .nav-wrapper-absolute {
+    position: absolute;
+    right: -1rem;
+  }
+
+  .nav-wrapper-sticky {
+    position: fixed;
+  }
+}
+
+nav {
+  display: flex;
+  justify-content: flex-end;
+
+  --size: 0.75rem;
+  --btn-padding: 0.25rem;
+
+  padding-block-end: var(--size);
+  gap: var(--size);
+
+  @media screen and (min-width: 850px) {
+    flex-direction: column;
+  }
+}
+
+nav button {
+  background: transparent;
+  border: 1.5px solid #fff;
+  border-radius: 0;
+  color: #fff;
+  cursor: pointer;
+  position: relative;
+  margin: 0;
+  padding: var(--btn-padding);
+  transition:
+    border-radius 0.2s ease-out,
+    margin 0.2s ease-out,
+    padding 0.2s ease-out;
+
+  &:hover {
+    --size-factor: calc(var(--size) / 4);
+
+    border-radius: var(--size-factor);
+    margin: calc(-1 * var(--size-factor));
+    padding: calc(var(--size-factor) + var(--btn-padding));
+  }
+
+  &::before {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0;
+    margin: calc(-1 * var(--size));
+  }
+}
+
+.page-wrapper {
+  container: content / inline-size;
+  position: relative;
+
+  margin: 0 auto;
+  min-width: 10rem;
+  width: fluid(21.25rem, 38.75rem, 21.875rem /* 350px */, 40rem /* 640px */);
+
+  @media screen and (min-width: 640px) {
+    width: fluid(38.75rem, 62rem, 40rem /* 640px */, 93.75rem /* 1500px */);
+  }
+
+  @media screen and (min-width: 1500px) {
+    width: 62rem;
+  }
+
+  @media screen and (min-width: 2308px) {
+    width: fluid(62rem, 107.5rem, 144.25rem /* 2308px */, 250rem /* 4000px */);
+  }
+}
+
+main.page-wrapper .page {
+  padding: 0.96cqw 1.92cqw 1.92cqw;
+  background-color: #fdfcf8;
+  border-radius: 0.2cqw;
+
+  @media screen {
+    box-shadow:
+      0 1cqw 4cqw #00000088,
+      0 2cqw 8cqw #00000066;
+  }
+}
+
+@media print {
+  nav {
+    display: none !important;
+  }
+
+  html,
+  body,
+  .table-bg,
+  main {
+    display: contents !important;
+    background: transparent;
+  }
+
+  .page {
+    display: block;
+    margin: 0 0.5em;
+    padding: 0 0.75em;
+  }
+
+  .content {
+    margin-bottom: 1px;
+  }
+
+  nav {
+    display: none;
+  }
+
+  .hide-print {
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+}

@@ -1,0 +1,35 @@
+name: domain-dev
+
+services:
+  remix:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: remix
+    container_name: remix
+    restart: unless-stopped
+    environment:
+      - UID=1000
+      - GID=1000
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Lisbon
+    networks:
+      - traefik-exposed
+    # ports:
+    #   - 80:3000
+    labels:
+      traefik.enable: true
+      traefik.http.services.homepage.loadbalancer.server.port: 3000
+      traefik.http.routers.homepage.rule: "Host(`carlosasj.dev`) || Host(`wildcard.carlosasj.dev`)"
+      traefik.http.routers.homepage.tls.domains[0].main: "carlosasj.dev"
+      traefik.http.routers.homepage.tls.domains[0].sans[0]: "*.carlosasj.dev"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+
+networks:
+  traefik-exposed:
+    external: true

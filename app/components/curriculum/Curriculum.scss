@@ -1,0 +1,240 @@
+.curriculum {
+  font-size: 14px;
+
+  // --offset: 0.6592em;
+  --grid-gap: 3.11cqw;
+  --offset: 0.25rem;
+  // --border: 2px solid #dddddd;
+  --border-width: 2px;
+  --border: var(--border-width) solid #dddddd;
+  line-height: calc(22 / 14);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu",
+    "Droid Sans", sans-serif, "Meiryo";
+
+  h1,
+  h2,
+  h3 {
+    font-weight: normal;
+  }
+
+  li {
+    text-wrap: balance;
+  }
+
+  h3 {
+    margin-block-start: 0.8em;
+    margin-block-end: 0;
+    font-size: 1.17em;
+    line-height: calc(22 / (1.17 * 14));
+  }
+
+  h3 + ul {
+    margin-block-start: 0.1em;
+
+    list-style-type: disc;
+    margin-block-end: 1em;
+    margin-inline: 0;
+    // padding-inline-start: 18px;
+    padding-inline-start: 1.89cqw;
+  }
+
+  p {
+    line-height: calc(20 / 14);
+    margin-block-start: 0.5em;
+    margin-block-end: 0.5em;
+    text-align: justify;
+  }
+
+  h1 {
+    font-size: 2em;
+    line-height: 1.2;
+    border-bottom-width: calc(1 / 28 * 1em);
+    border-bottom-style: solid;
+
+    border-bottom-color: transparent;
+    position: relative;
+    margin-top: 0.67em;
+    margin-bottom: calc(10 / 28 * 1em);
+    padding-bottom: 0.3em;
+    padding-bottom: 0px;
+
+    &:after {
+      content: " ";
+      width: calc(
+        100% + var(--grid-gap) + var(--border-width) / 2 - var(--offset, 0em)
+      );
+      border-bottom: var(--border);
+      display: block;
+      position: absolute;
+    }
+  }
+
+  h2 {
+    margin-block: 0.83em;
+    line-height: calc(22 / 21);
+  }
+
+  .contacts {
+    border-left: var(--border);
+    padding-left: var(--offset, 0em);
+    margin-left: calc(-1 * var(--offset, 0em));
+    padding-right: 1.2em;
+    width: max-content;
+
+    &::before,
+    &::after {
+      content: "";
+      display: block;
+      width: calc(var(--offset, 0em));
+      margin-left: calc(-1 * var(--offset, 0em));
+      border-top: var(--border);
+    }
+  }
+
+  @media screen and (max-width: 629px) {
+    h1:after {
+      width: 100%;
+    }
+
+    .contacts {
+      padding-right: 0;
+      width: 100%;
+    }
+    .contacts > p {
+      font-size: 0.75em;
+      display: flex;
+      flex-wrap: wrap;
+      // max-width: 96cqw;
+      justify-content: center;
+      gap: 4px 16px;
+    }
+    .contacts br {
+      display: none;
+
+      &:nth-of-type(3) {
+        display: initial;
+        flex-basis: 100%;
+      }
+    }
+  }
+
+  h3 ~ p {
+    margin-block-start: 0.08em;
+    padding-inline-start: calc(12.8 / 14 * 1em);
+  }
+
+  // &.grid {
+  // display: grid;
+  // grid-template-columns: auto 205px;
+  // grid-template-columns: 75fr 25fr;
+  // grid-gap: 1.64em;
+  /* background: red; */
+  // }
+
+  .c {
+    display: contents;
+  }
+
+  // [data-cell="header"] {
+  //   grid-area: header;
+  // }
+  // [data-cell="experience"] {
+  //   grid-area: experience;
+  // }
+  // [data-cell="contacts"] {
+  //   grid-area: contacts;
+  // }
+  // [data-cell="skills"] {
+  //   grid-area: skills;
+  // }
+
+  @media (min-width: 630px) {
+    font-size: 1.88cqw;
+    --border-width: 0.3cqw;
+    --offset: 1cqw;
+
+    &.grid {
+      display: grid;
+      grid-template-columns: auto min-content;
+      grid-gap: 0 var(--grid-gap);
+    }
+
+    .c {
+      display: initial;
+    }
+  }
+
+  .row {
+    display: flex;
+    background: #f1f1f1;
+
+    /* -webkit-column-count: 2;
+    -moz-column-count: 2;
+    column-count: 2; */
+    /* -webkit-column-rule: 1px dotted #e0e0e0;
+    -moz-column-rule: 1px dotted #e0e0e0;
+    column-rule: 1px dotted #e0e0e0; */
+  }
+
+  .column {
+    /* flex: 50%; */
+    display: block;
+  }
+
+  .side {
+    margin-block-start: calc(3.675 / 14 * 1em);
+  }
+
+  a {
+    color: #0013a8;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  a:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: 1px solid -webkit-focus-ring-color;
+    outline-offset: -1px;
+  }
+
+  details {
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    padding: 0.5em 0.5em 0;
+  }
+
+  summary {
+    font-weight: bold;
+    margin: -0.5em -0.5em 0;
+    padding: 0.5em;
+  }
+
+  details[open] {
+    padding: 0.5em;
+  }
+
+  details[open] summary {
+    border-bottom: 1px solid #aaa;
+    margin-bottom: 0.5em;
+  }
+
+  // .llm-only {
+  //   clip: rect(0 0 0 0);
+  //   clip-path: inset(50%);
+  //   height: 0.01px;
+  //   overflow: hidden;
+  //   position: absolute;
+  //   white-space: nowrap;
+  //   width: 0.01px;
+  // }
+
+  @media print {
+    font-size: 14px;
+  }
+}
