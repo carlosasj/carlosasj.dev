@@ -7,7 +7,7 @@ const iconMapPin = (
     style={{
       display: "inline",
       height: "1.25em",
-      padding: "0 3px",
+      padding: "0 0.21em",
       margin: 0,
     }}
     viewBox="0 0 384 512"
@@ -22,7 +22,7 @@ const iconPhone = (
       display: "inline",
       height: "1.5em",
       padding: 0,
-      margin: "-0.3em 0 -0.3em -1px",
+      margin: "-0.3em 0 -0.3em -0.07em",
     }}
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 640 640"
@@ -64,7 +64,7 @@ const iconLinkedin = (
     style={{
       display: "inline",
       height: "1.3em",
-      padding: "0 1px",
+      padding: "0 0.07em",
       margin: "-0.3em 0",
     }}
     xmlns="http://www.w3.org/2000/svg"

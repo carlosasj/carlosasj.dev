@@ -6,6 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
   useLocation,
+  useMatches,
 } from "react-router";
 
 import type { Route } from "./+types/root";
@@ -26,6 +27,12 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
+  const matches = useMatches();
+  const hydrate =
+    import.meta.env.DEV ||
+    matches.some(
+      (match) => (match.handle as { hydrate?: boolean } | undefined)?.hydrate,
+    );
   return (
     <html lang="en">
       <head>
@@ -36,8 +43,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body data-page={pathname}>
         {children}
-        <ScrollRestoration />
-        <Scripts />
+        {hydrate && (
+          <>
+            <ScrollRestoration />
+            <Scripts />
+          </>
+        )}
       </body>
     </html>
   );

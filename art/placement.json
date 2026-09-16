@@ -1,0 +1,44 @@
+{
+ "notebook": {
+  "x": 0,
+  "y": 4161,
+  "w": 919,
+  "h": 1834,
+  "above": false
+ },
+ "pen": {
+  "x": 605,
+  "y": 4105,
+  "w": 412,
+  "h": 778,
+  "above": false
+ },
+ "hand-left": {
+  "x": 300,
+  "y": 4916,
+  "w": 1035,
+  "h": 1084,
+  "above": false
+ },
+ "mug": {
+  "x": 2890,
+  "y": 4137,
+  "w": 1110,
+  "h": 1863,
+  "above": false
+ },
+ "hand-right": {
+  "x": 2740,
+  "y": 4689,
+  "w": 723,
+  "h": 1311,
+  "above": false
+ },
+ "hand-right-thumb": {
+  "x": 2710,
+  "y": 4689,
+  "w": 385,
+  "h": 707,
+  "above": true
+ }
+}

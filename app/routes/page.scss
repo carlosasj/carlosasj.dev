@@ -1,49 +1,55 @@
+@use "sass:list";
 @use "sass:math";
 
-@property --scrollbar {
-  syntax: "<length>";
-  inherits: true;
-  initial-value: 0px;
-}
+/* ---------------------------------------------------------------------------
+  One scale for the whole composition.
 
-html,
-body {
-  background-color: #000;
-  height: 100%;
-  margin: 0;
-  padding: 0;
+  Everything on the table is a multiple of --paper-w, the width of the sheet:
+  the sheet itself, the text on it, its shadow, the backgrounds and the
+  amount of space above and below. Nothing is anchored to the viewport
+  on its own, so resizing the window scales the document instead of re-laying
+  it out -- the page behaves like an SVG even though it is still text.
 
-  --scrollbar: calc(100vw - 100cqw);
-}
+  The constants are calibrated against the 1500px design, where the sheet is
+  992px (62rem) wide and the photo behind it is 2308px wide.
+--------------------------------------------------------------------------- */
 
-@function strip-units($number) {
-  @return math.div($number, ($number * 0 + 1));
-}
+// The open book in the photo is this fraction of the photo's width. The sheet
+// has to cover it exactly, so photo width = sheet width / $book-width.
+$book-width: math.div(992, 2308);
+// ...and this is the book's horizontal centre within the photo. Measured off
+// the source image: the book spans 0.285 -> 0.712 of its width.
+$book-center: 0.4983;
 
-@function to-px($value) {
-  @return strip-units($value) * 16px;
-}
+// Table showing above and below the sheet, as a fraction of the sheet width,
+// and how far the photo hangs past the bottom of the document, as a fraction
+// of the photo width.
+$table-above: math.div(64, 992); // 4rem   @ 992px
+$table-below: math.div(116.8, 992); // 7.3rem @ 992px
+$photo-drop: math.div(107.5, 2308); // 107.5px @ 2308px
 
-@function to-rem($value) {
-  @return strip-units($value) * 16px;
-}
+$photo-px: 4000 6000; // the source frame, in its own pixels
+// x, y, width, height in that frame, and whether the object sits on the sheet
+$objects: (
+  "notebook": (0, 4161, 919, 1834, false),
+  "pen": (605, 4105, 412, 778, false),
+  "hand-left": (300, 4916, 1035, 1084, false),
+  "mug": (2890, 4137, 1110, 1863, false),
+  "hand-right": (2740, 4689, 723, 1311, false),
+  "hand-right-thumb": (2710, 4689, 385, 707, true)
+);
+// How much of that frame one repeat of the oak tile covers.
+$tile-span: math.div(1200, 4000);
+// Where the table runs out: the darkest stain in the photograph, near enough
+// to black to carry on past the lit part without a visible edge.
+$table-dark: #0c0908;
 
-@function getUnit($value) {
-  @return str-slice($value * 0 + "", 2, -1);
-}
+@function frame-x($px) { @return math.percentage(math.div($px, list.nth($photo-px, 1))); }
+@function frame-y($px) { @return math.percentage(math.div($px, list.nth($photo-px, 2))); }
 
-// @mixin fluid($property, $from, $to, $bp-from, $bp-to) {
-//   $slope: math.div($to - $from, $bp-to - $bp-from);
-//   // $intercept: $to - $slope * $bp-to;
-//   $intercept: $from - $slope * $bp-from;
-
-//   // #{$property}: calc(
-//   //   $from - #{$slope * strip-units($bp-from)}#{getUnit($from)} + #{$slope *
-//   //     100vw}
-//   // );
-//   #{$property}: calc(#{$intercept} + #{$slope * 100vw});
-// }
-
+// Linear ramp between two breakpoints. Both the ramps and the media queries
+// they sit in are driven by 100vw, so the segments meet exactly at every
+// breakpoint and the scale never jumps.
 @function fluid($from, $to, $bp-from, $bp-to) {
   $slope: math.div($to - $from, $bp-to - $bp-from);
   $intercept: $from - $slope * $bp-from;
@@ -51,46 +57,171 @@ body {
   @return calc(#{$intercept} + #{$slope * 100vw});
 }
 
+html,
+body {
+  background-color: $table-dark;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .table-bg {
-  /* background-image: url("/assets/andrik-langfield-1-YQiOijio8-unsplash.jpg"); */
-  background-image: url("/assets/andrik-langfield-1-YQiOijio8-unsplash-full.png");
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-size: 226%;
-  background-position: calc(50% - var(--scrollbar)) 100%;
-  width: 100%;
-  min-height: 100%;
-  display: block;
-  padding-block: 1rem 2rem;
+  // The sheet grows with the window, then freezes between 1500px and 2308px so
+  // the type stays at a comfortable size on a normal desktop, then picks up
+  // again on very large displays.
+  --paper-w: min(
+    #{fluid(21.25rem, 38.75rem, 21.875rem /* 350px */, 40rem /* 640px */)},
+    100%
+  );
 
   @media screen and (min-width: 640px) {
-    background-size: calc(100% + 50.5rem); // 2308px
-    background-position: 49.5% calc(100% + (100vw - 640px) / 8);
-    padding-block: 1rem 7.3rem;
-  }
-
-  @media screen and (min-width: 850px) {
-    padding-block: 4rem 7.3rem;
+    --paper-w: #{fluid(38.75rem, 62rem, 40rem /* 640px */, 93.75rem /* 1500px */)};
   }
 
   @media screen and (min-width: 1500px) {
-    background-size: calc(1500px + 50.5rem); // 2308px
-    background-position: calc(49.5% - 8px + 0.5vw)
-      calc(100% + (1500px - 640px) / 8);
+    --paper-w: 62rem;
   }
 
   @media screen and (min-width: 2308px) {
-    background-size: 100%;
+    --paper-w: #{fluid(
+        62rem,
+        107.5rem,
+        144.25rem /* 2308px */,
+        250rem /* 4000px */
+      )};
   }
+
+  // Derived from the sheet, never from the viewport, so the book underneath
+  // stays locked to the sheet's edges at every window size.
+  --photo-w: calc(var(--paper-w) / #{$book-width});
+
+  // The frame the photo used to occupy. The objects are placed inside it, so
+  // it is the one thing that has to keep the photo's proportions exactly.
+  --photo-h: calc(var(--photo-w) * #{math.div(list.nth($photo-px, 2), list.nth($photo-px, 1))});
+
+  // The tile carries grain and nothing else -- build-assets.py divided the
+  // photograph's lighting out of it, because a lit tile repeats as a visible
+  // grid of bright and dark patches. The light is put back here instead, once,
+  // over the whole table however tall it turns out to be: a warm pool over the
+  // composition (soft-light, so it brightens the oak rather than fogging it)
+  // and a wide fall-off to near-black everywhere else (multiply, so the grain
+  // stays visible in the dark instead of being greyed over).
+  background-color: $table-dark;
+  background-image: radial-gradient(
+      ellipse calc(var(--photo-w) * 0.62) calc(var(--photo-h) * 0.42) at 50%
+        calc(100% - var(--photo-h) * 0.28),
+      #fff5e4 0%,
+      #7a6a58 45%,
+      #262024 100%
+    ),
+    radial-gradient(
+      ellipse calc(var(--photo-w) * 0.78) calc(var(--photo-h) * 0.66) at 50%
+        calc(100% - var(--photo-h) * 0.2),
+      #ffffff 0%,
+      #9d8570 40%,
+      #2a211a 78%,
+      $table-dark 100%
+    ),
+    url("/assets/table/oak.webp");
+  background-repeat: no-repeat, no-repeat, repeat;
+  background-size: auto, auto, calc(#{$tile-span} * var(--photo-w))
+    calc(#{$tile-span} * var(--photo-w));
+  // Everything hangs off the bottom edge, where the composition is, so the
+  // grain does not crawl under the objects as the document gets longer.
+  background-position: center bottom, center bottom, center bottom;
+  background-blend-mode: soft-light, multiply, normal;
+
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  display: block;
+  // The table is the whole composition, and nothing in it is ever meant to be
+  // reachable by scrolling sideways: the sheet's shadow, and the toolbar's
+  // invisible hit-area expander, both spill past the sheet's edges and would
+  // otherwise force a horizontal scrollbar on narrow screens. `clip` rather
+  // than `hidden` so this stays a plain box -- it does not become a scroll
+  // container, so overflow-y stays visible and the toolbar can still be fixed.
+  overflow-x: clip;
+  // max() keeps room for the out-of-flow toolbar on narrow screens, where a
+  // proportional margin would be shorter than the toolbar itself. It changes
+  // the slope at 640px but never the value, so the sheet does not jump.
+  padding-block: max(2.5rem, calc(#{$table-above} * var(--paper-w)))
+    calc(#{$table-below} * var(--paper-w));
 
   @media print {
     display: contents;
   }
 }
 
+@media print {
+  @page {
+    margin: 0; /* Removes browser-default print margins and headers/footers */
+  }
+}
+
+// The frame hangs past the bottom of the document on purpose, so the arms run
+// out of the picture instead of ending in a cut. .table-scene is what stops
+// them: it is exactly the table, and the composition is clipped to it, so the
+// page ends where the wood ends. `clip` rather than `hidden` so this never
+// becomes a scroll container -- the arms must not be reachable by scrolling.
+.table-scene {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+
+  @media print {
+    display: none;
+  }
+}
+
+.table-scene--over {
+  z-index: 1;
+}
+
+.table-frame {
+  position: absolute;
+  left: 50%;
+  bottom: calc(#{-$photo-drop} * var(--photo-w));
+  width: var(--photo-w);
+  height: var(--photo-h);
+  margin-left: calc(#{-$book-center} * var(--photo-w));
+}
+
+// No shadows are drawn here. Each cutout was taken from the photograph with
+// the shadow it was casting at the time, as black with an alpha ramp, so it
+// darkens whatever ends up underneath -- which is the real shadow, in the real
+// place, for free. A CSS drop-shadow on top of that would be a second one.
+.table-object {
+  position: absolute;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+@each $name, $o in $objects {
+  .table-object--#{$name} {
+    left: frame-x(list.nth($o, 1));
+    top: frame-y(list.nth($o, 2));
+    width: frame-x(list.nth($o, 3));
+    height: frame-y(list.nth($o, 4));
+    background-image: url("/assets/table/#{$name}.webp");
+  }
+}
+
+// The toolbar is chrome, not part of the document, so it is out of flow at
+// every size -- otherwise it drops out of flow at 850px and the whole sheet
+// leaps up by its height. Below 850px it sits in the table margin above the
+// sheet; above, it moves alongside it.
+.nav-wrapper-absolute {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+}
+
 @media screen and (min-width: 850px) {
   .nav-wrapper-absolute {
-    position: absolute;
+    bottom: auto;
+    top: 0;
     right: -1rem;
   }
 
@@ -103,13 +234,15 @@ nav {
   display: flex;
   justify-content: flex-end;
 
-  --size: 0.75rem;
-  --btn-padding: 0.25rem;
+  --size: 0.5rem;
+  --btn-padding: 0.1rem;
 
   padding-block-end: var(--size);
   gap: var(--size);
 
   @media screen and (min-width: 850px) {
+    --size: 0.75rem;
+    --btn-padding: 0.25rem;
     flex-direction: column;
   }
 }
@@ -126,7 +259,9 @@ nav button {
   transition:
     border-radius 0.2s ease-out,
     margin 0.2s ease-out,
-    padding 0.2s ease-out;
+    padding 0.2s ease-out,
+    opacity 0.15s ease-out,
+    visibility 0s;
 
   &:hover {
     --size-factor: calc(var(--size) / 4);
@@ -145,25 +280,28 @@ nav button {
   }
 }
 
+// Tucked: the window has scrolled far enough that the button sits completely
+// under the thumb holding the sheet (page.tsx decides, against the thumb's
+// traced silhouette). The thumb is drawn over the toolbar, but its edges are
+// feathered, so a button under it shows through as a ghost -- the one thing
+// that gives the photograph away. On the way in, half over the hand and half
+// under the thumb, it stays: that reads as the button lying on the page,
+// between the two. Visibility waits for the fade so the button is never
+// clickable while invisible, which also takes it out of the tab order while it
+// is tucked; a button that already has keyboard focus when the page scrolls it
+// under the thumb stays put.
+nav button.is-tucked:not(:focus-visible) {
+  opacity: 0;
+  visibility: hidden;
+  transition-delay: 0s, 0s, 0s, 0s, 0.15s;
+}
+
 .page-wrapper {
   container: content / inline-size;
   position: relative;
 
   margin: 0 auto;
-  min-width: 10rem;
-  width: fluid(21.25rem, 38.75rem, 21.875rem /* 350px */, 40rem /* 640px */);
-
-  @media screen and (min-width: 640px) {
-    width: fluid(38.75rem, 62rem, 40rem /* 640px */, 93.75rem /* 1500px */);
-  }
-
-  @media screen and (min-width: 1500px) {
-    width: 62rem;
-  }
-
-  @media screen and (min-width: 2308px) {
-    width: fluid(62rem, 107.5rem, 144.25rem /* 2308px */, 250rem /* 4000px */);
-  }
+  width: var(--paper-w);
 }
 
 main.page-wrapper .page {
@@ -199,10 +337,6 @@ main.page-wrapper .page {
 
   .content {
     margin-bottom: 1px;
-  }
-
-  nav {
-    display: none;
   }
 
   .hide-print {

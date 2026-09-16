@@ -62,13 +62,98 @@ const IconPrint = (props: any) => (
 );
 
 function handleDownload() {}
-function handlePrint() {
-  window.print();
-}
+
+// The thumb's silhouette, in fractions of its own image, traced by
+// art/build-assets.py (which prints it -- paste it back here if the thumb is
+// ever re-cut). Only the thumb itself: not its baked shadow, and not the
+// faintest quarter of its feathered rim.
+const THUMB_OUTLINE: [number, number][] = [
+  [0.2286, 0.2023], [0.1766, 0.2235], [0.1506, 0.2489], [0.1403, 0.2801], [0.1481, 0.3239],
+  [0.1766, 0.3861], [0.2182, 0.4455], [0.2312, 0.4837], [0.2416, 0.4866], [0.2779, 0.529],
+  [0.3247, 0.5516], [0.3948, 0.6379], [0.4052, 0.7228], [0.4052, 0.8388], [0.4701, 0.8741],
+  [0.574, 0.9081], [0.6312, 0.9165], [0.6909, 0.9165], [0.7584, 0.9081], [0.8156, 0.8925],
+  [0.8701, 0.8699], [0.9169, 0.8317], [0.9299, 0.802], [0.9299, 0.7624], [0.8987, 0.6874],
+  [0.826, 0.6082], [0.7792, 0.6068], [0.7247, 0.5686], [0.6883, 0.5233], [0.6857, 0.505],
+  [0.6519, 0.4399], [0.5896, 0.3734], [0.5377, 0.338], [0.4494, 0.2603], [0.387, 0.2221],
+  [0.3247, 0.2023], [0.2883, 0.1966],
+];
+
+// The toolbar is fixed to the window and the thumb scrolls past it, drawn over
+// it. On a short window the end of the page brings the thumb right across the
+// print button, and the thumb's edges are feathered, so the button shows
+// through as a ghost. Once a button is completely under the thumb it is marked
+// .is-tucked and page.scss fades it out; while only partly under -- on its way
+// in, half over the hand -- it stays. Nine points over each button are tested
+// against the outline; at the scale of a button the outline is smooth, so if
+// all nine are inside, all of the button is. Inline for the same reason as the
+// print handler: the page is not hydrated.
+const TUCK_UNDER_THUMB = `(() => {
+  const outline = ${JSON.stringify(THUMB_OUTLINE)};
+  const thumb = document.querySelector(".table-object--hand-right-thumb");
+  const buttons = document.querySelectorAll("nav button");
+  if (!thumb || !buttons.length) return;
+  const inside = (x, y) => {
+    let hit = false;
+    for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {
+      const [xi, yi] = outline[i], [xj, yj] = outline[j];
+      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) hit = !hit;
+    }
+    return hit;
+  };
+  let frame = 0;
+  const check = () => {
+    frame = 0;
+    const t = thumb.getBoundingClientRect();
+    for (const button of buttons) {
+      const b = button.getBoundingClientRect();
+      let under = t.width > 0 && t.height > 0;
+      for (let i = 0; under && i < 9; i++) {
+        under = inside(
+          (b.left + (b.width * (i % 3)) / 2 - t.left) / t.width,
+          (b.top + (b.height * Math.floor(i / 3)) / 2 - t.top) / t.height,
+        );
+      }
+      button.classList.toggle("is-tucked", under);
+    }
+  };
+  const schedule = () => {
+    if (!frame) frame = requestAnimationFrame(check);
+  };
+  addEventListener("scroll", schedule, { passive: true });
+  addEventListener("resize", schedule);
+  // Web fonts can reflow the sheet, which moves the thumb without a scroll.
+  addEventListener("load", schedule);
+  document.fonts?.ready.then(schedule);
+  check();
+})();`;
+
+// The things lying on the table, cut out of the original photograph by hand
+// and packed by art/build-assets.py. page.scss knows where each one goes; all
+// that matters here is which side of the sheet it is on. The right hand
+// appears on both: the whole hand underneath, and the thumb again on top, so
+// the sheet slides between them and the hand reads as holding it.
+const TableScene: React.FC<{ over?: boolean; objects: string[] }> = ({
+  over,
+  objects,
+}) => (
+  <div
+    className={`table-scene ${over ? "table-scene--over" : "table-scene--under"}`}
+    aria-hidden="true"
+  >
+    <div className="table-frame">
+      {objects.map((name) => (
+        <span key={name} className={`table-object table-object--${name}`} />
+      ))}
+    </div>
+  </div>
+);
 
 export const Layout: React.FC<React.PropsWithChildren> = ({ children }) => {
   return (
     <div className="table-bg">
+      <TableScene
+        objects={["notebook", "pen", "hand-left", "mug", "hand-right"]}
+      />
       <main className="page-wrapper">
         <div className="nav-wrapper-absolute">
           <div className="nav-wrapper-sticky">
@@ -76,9 +161,16 @@ export const Layout: React.FC<React.PropsWithChildren> = ({ children }) => {
               {/* <button aria-label="Download" onClick={handleDownload}>
                 <IconDownload />
               </button> */}
-              <button aria-label="Print" onClick={handlePrint}>
+              <button aria-label="Print" id="print">
                 <IconPrint />
               </button>
+              {/* The page isn't hydrated (see root.tsx), so React's onClick
+                  would never be attached; wire the button up by hand. */}
+              <script
+                dangerouslySetInnerHTML={{
+                  __html: `document.getElementById("print").onclick=()=>print()`,
+                }}
+              />
             </nav>
           </div>
         </div>
@@ -86,11 +178,14 @@ export const Layout: React.FC<React.PropsWithChildren> = ({ children }) => {
           <section className="content">{children}</section>
         </div>
       </main>
+      <TableScene over objects={["hand-right-thumb"]} />
+      {/* After the thumb, so the thumb exists by the time this runs. */}
+      <script dangerouslySetInnerHTML={{ __html: TUCK_UNDER_THUMB }} />
     </div>
   );
 };
 
-export const Page: React.FC<React.PropsWithChildren<void>> = () => {
+export const CurriculumPage: React.FC<React.PropsWithChildren> = () => {
   return (
     <Layout>
       <Curriculum />
@@ -98,4 +193,4 @@ export const Page: React.FC<React.PropsWithChildren<void>> = () => {
   );
 };
 
-export default Page;
+export default CurriculumPage;
